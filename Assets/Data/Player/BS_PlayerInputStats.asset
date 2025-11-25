@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8682332054145215443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8fa914e3c60f9d498f546f45c8abfed, type: 3}
+  m_Name: BF_PitchInput
+  m_EditorClassIdentifier: Assembly-CSharp::BSOAP.Variables.FloatVariableSO
+  _value: 0
+  DebugMode: 0
+  _reset: 0
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70f0abf4d4ce86e4394419da86006f24, type: 3}
+  m_Name: BS_PlayerInputStats
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputStats
+  BF_PitchInput:
+    VariableSo: {fileID: -8682332054145215443}
+  BF_RollInput:
+    VariableSo: {fileID: 4121441290997072689}
+  BF_HeightInput:
+    VariableSo: {fileID: 7346867936788556185}
+  BF_YawlInput:
+    VariableSo: {fileID: 634222811274338776}
+--- !u!114 &634222811274338776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8fa914e3c60f9d498f546f45c8abfed, type: 3}
+  m_Name: BF_YawlInput
+  m_EditorClassIdentifier: Assembly-CSharp::BSOAP.Variables.FloatVariableSO
+  _value: 0
+  DebugMode: 0
+  _reset: 0
+--- !u!114 &4121441290997072689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8fa914e3c60f9d498f546f45c8abfed, type: 3}
+  m_Name: BF_RollInput
+  m_EditorClassIdentifier: Assembly-CSharp::BSOAP.Variables.FloatVariableSO
+  _value: 0
+  DebugMode: 0
+  _reset: 0
+--- !u!114 &7346867936788556185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8fa914e3c60f9d498f546f45c8abfed, type: 3}
+  m_Name: BF_HeightInput
+  m_EditorClassIdentifier: Assembly-CSharp::BSOAP.Variables.FloatVariableSO
+  _value: 0
+  DebugMode: 0
+  _reset: 0
