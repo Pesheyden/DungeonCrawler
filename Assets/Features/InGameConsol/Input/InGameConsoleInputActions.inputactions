@@ -1,0 +1,77 @@
+{
+    "version": 1,
+    "name": "InGameConsoleInputActions",
+    "maps": [
+        {
+            "name": "Console",
+            "id": "0fce12cc-11e2-47ce-8e13-90d4bf890832",
+            "actions": [
+                {
+                    "name": "Enter",
+                    "type": "Button",
+                    "id": "0c408abc-3a49-4520-a3c7-c537fb518b9e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DirectionInput",
+                    "type": "Value",
+                    "id": "8ba30115-9bc3-478b-b741-43e8c25a2074",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "fe16ba04-eab8-4f07-b695-f4ce85298902",
+                    "path": "<Keyboard>/enter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Enter",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "1D Axis",
+                    "id": "e0b09dfb-e1e7-4e59-abea-fd64b50093db",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DirectionInput",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "8ccf0aad-92e8-45fb-ad94-b40f87cd9279",
+                    "path": "<Keyboard>/downArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DirectionInput",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "258ed01b-c072-449c-9f7d-af83da6cb687",
+                    "path": "<Keyboard>/upArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DirectionInput",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

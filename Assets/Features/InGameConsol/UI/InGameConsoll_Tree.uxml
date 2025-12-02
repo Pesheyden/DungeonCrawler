@@ -1,0 +1,11 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Features/InGameConsol/UI/Uss/Basic.uss?fileID=7433441132597879392&amp;guid=34a6a673fe9635a4fa2ce72ffa12fa5d&amp;type=3#Basic" />
+    <ui:VisualElement class="background" style="flex-grow: 1; width: 1920px; height: 450px; flex-wrap: nowrap; max-height: 450px; background-color: rgba(0, 0, 0, 0.73);">
+        <ui:Label text="Console" class="label" />
+        <ui:ListView name="Chat_ListView" class="background listDisableHover reverseList" style="height: 100%; background-color: rgba(0, 0, 0, 0);" />
+        <ui:TextField name="Input_TextField" value="give_item " class="myTextField" style="height: 48px; min-height: 48px; max-height: 48px;" />
+    </ui:VisualElement>
+    <ui:VisualElement style="flex-grow: 1; width: 50%; height: 200px; max-height: 200px;">
+        <ui:ListView name="Suggestions_ListView" class="listCustomHover" style="max-height: none; height: 100%; margin-left: 8px;" />
+    </ui:VisualElement>
+</ui:UXML>

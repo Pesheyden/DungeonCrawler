@@ -1,0 +1,95 @@
+:root {
+}
+
+.label {
+    background-color: rgba(0, 0, 0, 0.75);
+    color: rgb(196, 196, 196);
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    font-size: 24px;
+}
+
+.background {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.myTextField {
+    margin: 4px;
+    padding: 2px;
+    border: 2px solid red;
+    font-size: 18px;
+    --unity-cursor-color: rgb(196, 196, 196)
+}
+
+.myTextField > .unity-label {
+}
+
+.myTextField > .unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0.58);
+    -unity-background-scale-mode: stretch-to-fill;
+    font-size: 18px;
+    color: rgb(196, 196, 196);
+}
+
+
+.normalText {
+    font-size: 18px;
+    color: rgb(196, 196, 196);
+}
+
+.transButton {
+    color: rgb(196, 196, 196);
+    background-color: rgba(255, 255, 255, 0);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    -unity-text-align: middle-left;
+    font-size: 18px;
+}
+
+.unity-list-view__empty-label {
+    display: none;
+}
+
+.listDisableHover .unity-list-view__item:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.listCustomHover .unity-list-view__item:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.listCustomHover .unity-list-view__item:hover .transButton {
+    background-color: rgb(144, 132, 63);
+    color: black;
+    font-weight: bold;
+}
+
+.highlighted-item .transButton {
+    background-color: rgb(255, 215, 0);
+    color: rgb(0, 0, 0);
+    font-weight: bold;
+}
+
+.reverseList .unity-scroll-view__content-viewport {
+    flex-direction: column-reverse;
+}
+
+.box {
+    background-color: rgba(0, 0, 0, 0.91);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+}

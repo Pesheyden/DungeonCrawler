@@ -1,0 +1,6 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Features/InGameConsol/UI/Uss/Basic.uss?fileID=7433441132597879392&amp;guid=34a6a673fe9635a4fa2ce72ffa12fa5d&amp;type=3#Basic" />
+    <ui:VisualElement name="VisualElement" class="box" style="flex-grow: 1; position: absolute;">
+        <ui:Label text="Tip" class="normalText" style="flex-shrink: 1; flex-grow: 1; flex-wrap: wrap; white-space: normal; -unity-text-align: middle-left;" />
+    </ui:VisualElement>
+</ui:UXML>
