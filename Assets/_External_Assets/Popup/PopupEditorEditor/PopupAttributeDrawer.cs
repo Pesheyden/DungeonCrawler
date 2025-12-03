@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 
 [CustomPropertyDrawer(typeof(PopupAttribute))]
@@ -25,3 +26,4 @@ public class PopupAttributeDrawer : PropertyDrawer {
         }
     }
 }
+#endif

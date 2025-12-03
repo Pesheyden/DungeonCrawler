@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 
 public class PopupEditor : EditorWindow {
@@ -28,3 +29,4 @@ public class PopupEditor : EditorWindow {
         targetEditor.OnInspectorGUI();
     }
 }
+#endif

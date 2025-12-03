@@ -67,7 +67,7 @@
 }
 
 .listCustomHover .unity-list-view__item:hover .transButton {
-    background-color: rgb(144, 132, 63);
+    background-color: rgb(255, 215, 0);
     color: black;
     font-weight: bold;
 }

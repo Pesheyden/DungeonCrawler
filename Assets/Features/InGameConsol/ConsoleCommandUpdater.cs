@@ -1,4 +1,6 @@
+#if UNITY_EDITOR
 using UnityEditor;
+using UnityEngine;
 
 [InitializeOnLoad]
 public class ConsoleCommandUpdater
@@ -8,7 +10,8 @@ public class ConsoleCommandUpdater
         AssemblyReloadEvents.afterAssemblyReload += () =>
         {
             ConsoleCommandRegistry.UpdateCommands();
-            UnityEngine.Debug.Log("Commands updated after assembly reload.");
+            Debug.Log("Commands updated after assembly reload.");
         };
     }
 }
+#endif

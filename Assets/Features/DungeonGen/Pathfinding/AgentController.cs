@@ -133,6 +133,7 @@ public class AgentController : MonoBehaviour
         _isMoving = false;
     }
 
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         if(!_debugDiscoveredTilesCosts)
@@ -146,4 +147,5 @@ public class AgentController : MonoBehaviour
             Handles.Label(new Vector3(point.Position.x,point.Position.y,point.Position.z - .25f), point.Heuristic.ToString());
         }
     }
+#endif
 }

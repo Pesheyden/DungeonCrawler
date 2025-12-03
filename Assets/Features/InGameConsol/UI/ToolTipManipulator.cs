@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 
 public class ToolTipManipulator : Manipulator
 {
-    private VisualElement element;
+    private VisualElement _element;
     private VisualTreeAsset _visualTreeAsset;
 
     public ToolTipManipulator(VisualTreeAsset tooltipTemplate)
@@ -15,36 +15,43 @@ public class ToolTipManipulator : Manipulator
     {
         target.RegisterCallback<MouseEnterEvent>(MouseIn);
         target.RegisterCallback<MouseOutEvent>(MouseOut);
+        target.RegisterCallback<DetachFromPanelEvent>(OnDetach);
     }
+    
 
     protected override void UnregisterCallbacksFromTarget()
     {
         target.UnregisterCallback<MouseEnterEvent>(MouseIn);
         target.UnregisterCallback<MouseOutEvent>(MouseOut);
+        target.RegisterCallback<DetachFromPanelEvent>(OnDetach);
     }
 
     private void MouseIn(MouseEnterEvent e)
     {
         if(target.tooltip == null)
             return;
-        if (element == null)
+        if (_element == null)
         {
-            element = _visualTreeAsset.CloneTree();
-            element.Q<Label>().text = target.tooltip;
-            element.style.left = this.target.worldBound.center.x;
-            element.style.top = this.target.worldBound.yMin;
+            _element = _visualTreeAsset.CloneTree();
+            _element.Q<Label>().text = target.tooltip;
+            _element.style.left = this.target.worldBound.center.x;
+            _element.style.top = this.target.worldBound.yMin;
             var root = InGameConsoleUtils.GetRootVisualElement(this.target);
-            root.Add(element);
+            root.Add(_element);
         }
 
-        element.style.visibility = Visibility.Visible;
-        element.BringToFront();
+        _element.style.visibility = Visibility.Visible;
+        _element.BringToFront();
     }
 
     private void MouseOut(MouseOutEvent e)
     {
         if(target.tooltip == null)
             return;
-        element.style.visibility = Visibility.Hidden;
+        _element.style.visibility = Visibility.Hidden;
+    }
+    private void OnDetach(DetachFromPanelEvent evt)
+    {
+        _element?.RemoveFromHierarchy();
     }
 }
