@@ -1,8 +1,8 @@
 using NaughtyAttributes;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DroneMovementSystemData", menuName = "Scriptable Objects/DroneMovementSystemData")]
-public class DroneMovementSystemData : ScriptableObject
+[CreateAssetMenu(fileName = "PhysicsDrivenDroneMovementSystemData", menuName = "Scriptable Objects/PhysicsDrivenDroneMovementSystemData")]
+public class PhysicsDrivenDroneMovementSystemData : ScriptableObject
 {
     public float ForceStep;
     public float RollPitchYawMaxEffect = 5;

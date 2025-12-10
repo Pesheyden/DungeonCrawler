@@ -5,13 +5,8 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] private PlayerInputStats _playerInputStats;
     [SerializeField] private PlayerMoveStats _playerMoveStats;
-    [SerializeField] private Transform _testTarget;
-    [SerializeField] private Transform _testLookTarget;
-    [SerializeField] private Transform _camera;
     private MovementSystem _movementSystem;
-
-    private Vector3 _lastMoveTarget;
-    private Vector3 _lastLookTarget;
+    
     private void Awake()
     {
         _movementSystem = GetComponent<MovementSystem>();
@@ -19,45 +14,51 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        SetTargets();
-        //_movementSystem.SetTarget(_testTarget.position,_testLookTarget.position);
-        _movementSystem.Move(Time.fixedDeltaTime);
-    }
+        // 1. Compute world‑space move target
+        Vector3 moveTarget = transform.position;
 
-    private void SetTargets()
-    {
-        Vector3 moveTarget = Vector3.zero;
-        
-        moveTarget += _playerInputStats.BF_RollInput.Value * transform.right;
-        moveTarget += _playerInputStats.BF_PitchInput.Value * transform.forward;
-        moveTarget += _playerInputStats.BF_HeightInput.Value * transform.up;
+        // Forward/back (Pitch input → move along drone forward)
+        moveTarget += transform.forward * 
+                      (_playerInputStats.BF_PitchInput.Value * _playerMoveStats.MoveTargetDistanceMultiplier);
 
-        if (moveTarget != Vector3.zero)
+        // Right/left (Roll input → move along drone right)
+        moveTarget += transform.right *
+                      (_playerInputStats.BF_RollInput.Value * _playerMoveStats.MoveTargetDistanceMultiplier);
+
+        // Height (Throttle input → move along world up)
+        moveTarget.y += _playerInputStats.BF_HeightInput.Value * _playerMoveStats.MoveTargetDistanceMultiplier;
+
+        // If no height input, keep current altitude
+        if (_playerInputStats.BF_HeightInput.Value == 0)
+            moveTarget.y = transform.position.y;
+
+
+        // 2. Compute world‑space look target
+        Vector3 lookTarget;
+
+        if (_playerInputStats.BF_YawlInput.Value != 0)
         {
-            moveTarget = moveTarget.normalized * _playerMoveStats.MoveTargetDistanceMultiplier + transform.position;
-            _lastMoveTarget = new Vector3(transform.position.x,transform.position.y,transform.position.z);
+            // Look direction = forward + yaw input * right
+            Vector3 lookDir =
+                transform.forward / _playerMoveStats.LookTargetDistanceMultiplier +
+                transform.right * (_playerInputStats.BF_YawlInput.Value * _playerMoveStats.LookTargetDistanceMultiplier);
+
+            lookTarget = transform.position + lookDir.normalized * _playerMoveStats.LookTargetDistanceMultiplier;
+
+            _movementSystem.SetTarget(moveTarget, lookTarget);
         }
         else
-            moveTarget = _lastMoveTarget;
+        {
+            _movementSystem.SetTarget(moveTarget);
+        }
 
-        Vector3 lookTarget = Vector3.zero;
-
-        lookTarget += _camera.forward;
-        lookTarget.y = 0;
-        lookTarget = lookTarget.normalized * _playerMoveStats.LookTargetDistanceMultiplier + transform.position;
-
-
-        _movementSystem.SetTarget(moveTarget,lookTarget);   
-        
+        // 3. Move the drone
+        _movementSystem.Move(Time.fixedDeltaTime);
     }
 
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawCube(_lastMoveTarget, Vector3.one);
-        
-        Gizmos.color = Color.blue;
-        Gizmos.DrawCube(_lastLookTarget, Vector3.one);
+
     }
 }

@@ -1,433 +1,193 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NaughtyAttributes;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
+/// <summary>
+/// Physics-based velocity controller for a quadcopter.
+/// Uses cascaded control loops:
+/// Position → Velocity → Acceleration → Tilt → Angular Velocity → Angular Acceleration → Torque.
+/// </summary>
+[RequireComponent(typeof(Rigidbody))]
 public class DroneMovementSystem : MovementSystem
 {
-    [Header("SetUp")]
-    [Tooltip("FL,FR,BR,BL")] 
-    [SerializeField] private Transform[] _droneMotors;
-    [SerializeField] private DroneMovementSystemData _droneMovementSystemData;
-    
-    [HorizontalLine] 
-    [Header("Debug")]
-    [SerializeField] private bool _debugRollPid;
-    [SerializeField] private bool _debugPitchPid;
-    [SerializeField] private bool _debugThrottlePid;
-    [SerializeField] private bool _debugRotationPid;
-    [SerializeField] private bool _debugDistances;
-    [SerializeField] private bool _debugForces;
-    [HorizontalLine]
+    [Header("Propeller Visuals")]
+    [SerializeField] private GameObject _propFl;
+    [SerializeField] private GameObject _propFr;
+    [SerializeField] private GameObject _propRr;
+    [SerializeField] private GameObject _propRl;
 
-    private PIDFloatController _rollController;
-    private PIDFloatController _pitchController;
-    private PIDFloatController _throttleController;
-    private PIDFloatController _heightController;
-    private PIDFloatController _yawlController;
+    [Header("Control Targets")]
+    [SerializeField] private float _desiredHeight = 4f;      // Target altitude
+    [SerializeField] private float _desiredForwardVel = 0f;  // Target forward velocity (Unity Z)
+    [SerializeField] private Vector2 _desiredForwardVelClamp;
+    [SerializeField] private float _desiredRightVel = 0f;    // Target right velocity (Unity X)
+    [SerializeField] private Vector2 _desiredRightVelClamp;
+    [SerializeField] private float _desiredYawRate = 0f;     // Target yaw rate
+    [SerializeField] private Vector2 _desireYawRateClamp;
+    [SerializeField] private float _initialHeight = 4f;
 
-    private Vector3 _flMotorLastForce;
-    private Vector3 _frMotorLastForce;
-    private Vector3 _brMotorLastForce;
-    private Vector3 _blMotorLastForce;
-    
-    private float _areaX;
-    private float _areaY;
-    private float _areaZ;
-    
-    private Rigidbody _rigidbody;
+    [Header("Drone Data (Control Limits + Time Constants + Visuals)")]
+    [SerializeField] private DroneMovementSystemData _data;
 
-    private float _forwardDistDebug;
-    private float _rightDistDebug;
-    private float _upDistDebug;
-    private float _flMotorForceDebug;
-    private float _frMotorForceDebug;
-    private float _brMotorForceDebug;
-    private float _blMotorForceDebug;
-    private Vector3 _yawForwarDebug;
-    private Vector3 _yawRightDebug;
-    private Vector3 _yawUpDebug;
+    private Rigidbody _rb;
 
-
-    private void Awake()
+    private void Start()
     {
-        _rollController = new PIDFloatController(_droneMovementSystemData.RollValues);
-        _pitchController = new PIDFloatController(_droneMovementSystemData.PitchValues);
-        _throttleController = new PIDFloatController(_droneMovementSystemData.ThrottleValues);
-        _heightController = new PIDFloatController(_droneMovementSystemData.HeightValues);
-        _yawlController = new PIDFloatController(_droneMovementSystemData.YawlValues);
+        _rb = GetComponent<Rigidbody>();
 
-        _rigidbody = GetComponent<Rigidbody>();
-
-        var collider = GetComponent<BoxCollider>();
-        _areaX = collider.size.y * collider.size.z;
-        _areaY = collider.size.z * collider.size.z;
-        _areaZ = collider.size.z * collider.size.y;
+        // Initial upward force to counter gravity (same as original VelocityControl)
+        Vector3 desiredForce = new Vector3(0.0f, _data.Gravity * _rb.mass, 0.0f);
+        //_rb.AddForce(desiredForce, ForceMode.Acceleration);
     }
-       public override void Move(float deltaTime)
+
+    public override void Move(float deltaTime)
     {
-        // Vector from drone to target
+        ComputeDesireVelocities();
+
+        // -----------------------------
+        // 1. READ STATE (LOCAL SPACE)
+        // -----------------------------
+        Vector3 velocity = transform.InverseTransformDirection(_rb.linearVelocity);      // local velocity
+        Vector3 angularVelocity = transform.InverseTransformDirection(_rb.angularVelocity); // local angular velocity
+        Vector3 inertia = _rb.inertiaTensor;
+        float altitude = transform.position.y;
+
+        // -----------------------------
+        // 2. TILT (PITCH, YAW, ROLL)
+        //    Small-angle approximation from world down, just like StateFinder
+        // -----------------------------
+        // Forward vector
+        Vector3 fwd = transform.forward;
+
+        // Project forward onto XZ plane (removes pitch)
+        Vector3 fwdProjected = Vector3.ProjectOnPlane(fwd, Vector3.up).normalized;
+
+        // Pitch = angle between forward and its projection, around local X axis
+        float pitch = Vector3.SignedAngle(fwdProjected, fwd, transform.right) * Mathf.Deg2Rad;
+
+        // Right vector
+        Vector3 right = transform.right;
+
+        // Project right onto XZ plane (removes roll)
+        Vector3 rightProjected = Vector3.ProjectOnPlane(right, Vector3.up).normalized;
+
+        // Roll = angle between right and its projection, around local Z axis
+        float roll = Vector3.SignedAngle(rightProjected, right, transform.forward) * Mathf.Deg2Rad;
+
+        // Yaw stays world yaw (in radians)
+        float yaw = transform.eulerAngles.y * Mathf.Deg2Rad;
+
+        // Unified angle vector
+        Vector3 angles = new Vector3(pitch, yaw, roll);
+
+
+        Vector3 desiredTheta;
+        Vector3 desiredOmega;
+
+        float heightError = altitude - _desiredHeight;
+
+        Vector3 desiredVelocity = new Vector3 (_desiredRightVel, -1.0f * heightError / _data.TcVerticalVel, _desiredForwardVel);
+        Vector3 velocityError = velocity - desiredVelocity;
+
+        Vector3 desiredAcceleration = velocityError * -1.0f / _data.TcAcceleration;
+
+        desiredTheta = new Vector3 (desiredAcceleration.z / _data.Gravity, 0.0f, -desiredAcceleration.x / _data.Gravity);
+        if (desiredTheta.x > _data.MaxPitch) {
+            desiredTheta.x = _data.MaxPitch;
+        } else if (desiredTheta.x < -1.0f * _data.MaxPitch) {
+            desiredTheta.x = -1.0f * _data.MaxPitch;
+        }
+        if (desiredTheta.z > _data.MaxRoll) {
+            desiredTheta.z = _data.MaxRoll;
+        } else if (desiredTheta.z < -1.0f * _data.MaxRoll) {
+            desiredTheta.z = -1.0f * _data.MaxRoll;
+        }
+
+        Vector3 thetaError = angles - desiredTheta;
+
+        desiredOmega = thetaError * -1.0f / _data.TcOmegaXY;
+        desiredOmega.y = _desiredYawRate;
+
+        Vector3 omegaError = angularVelocity - desiredOmega;
+
+        Vector3 desiredAlpha = Vector3.Scale(omegaError, new Vector3(-1.0f/_data.TcAlphaXY, -1.0f/_data.TcAlphaZ, -1.0f/_data.TcAlphaXY));
+        desiredAlpha = Vector3.Min (desiredAlpha, Vector3.one * _data.MaxAngularAccel);
+        desiredAlpha = Vector3.Max (desiredAlpha, Vector3.one * _data.MaxAngularAccel * -1.0f);
+
+        float desiredThrust = (_data.Gravity + desiredAcceleration.y) / (Mathf.Cos (angles.z) * Mathf.Cos (angles.x));
+        desiredThrust = Mathf.Min (desiredThrust, 2.0f * _data.Gravity);
+        desiredThrust = Mathf.Max (desiredThrust, 0.0f);
+
+        Vector3 desiredTorque = Vector3.Scale (desiredAlpha, inertia);
+        Vector3 desiredForce = new Vector3 (0.0f, desiredThrust, 0.0f);
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+
+        rb.AddRelativeTorque (desiredTorque, ForceMode.Acceleration);
+        rb.AddRelativeForce (desiredForce , ForceMode.Acceleration);
+
+
+        // -----------------------------
+        // 10. PROPELLER VISUAL ROTATION
+        // -----------------------------
+        float spin = desiredThrust * _data.PropSpeedScale * deltaTime;
+        _propFl.transform.Rotate(Vector3.forward * spin);
+        _propFr.transform.Rotate(Vector3.forward * spin);
+        _propRr.transform.Rotate(Vector3.forward * spin);
+        _propRl.transform.Rotate(Vector3.forward * spin);
+
+        // Optional debug
+        // Debug.Log("Velocity " + velocity);
+        // Debug.Log("Desired Velocity " + desiredVelocity);
+        // Debug.Log("Desired Acceleration " + desiredAcceleration);
+        // Debug.Log("Angles " + angles);
+        // Debug.Log("Desired Angles " + desiredTheta);
+        // Debug.Log("Angular Velocity " + angularVelocity);
+        // Debug.Log("Desired Angular Velocity " + desiredOmega);
+        // Debug.Log("Desired Angular Acceleration " + desiredAlpha);
+        // Debug.Log("Desired Torque " + desiredTorque);
+    }
+
+    private void ComputeDesireVelocities()
+    {
+        // Target-based movement from MovementSystem
         Vector3 toTarget = TargetPosition - transform.position;
-        Vector3 toLookTarget = LookTargetPosition - transform.position;
-        
-        // Extract yaw-only rotation (around world Y axis)
-        float yaw = transform.eulerAngles.y;
-        Quaternion yawRotation = Quaternion.Euler(0f, yaw, 0f);
 
-        // Build yaw-only forward/right vectors
-        Vector3 yawForward = yawRotation * Vector3.forward;
-        Vector3 yawRight   = yawRotation * Vector3.right;
-        Vector3 yawUp      = Vector3.up;
-    
-        // Distances projected onto yaw-only axes
-        float forwardDist = Vector3.Dot(toTarget, yawForward);
-        float rightDist   = Vector3.Dot(toTarget, yawRight);
-        float upDist      = Vector3.Dot(toTarget, yawUp);
+        // Desired local velocities (X = right, Z = forward)
+        _desiredRightVel = Mathf.Clamp(toTarget.x, _desiredRightVelClamp.x, _desiredRightVelClamp.y);
+        _desiredForwardVel = Mathf.Clamp(toTarget.z, _desiredForwardVelClamp.x, _desiredForwardVelClamp.y);
+        _desiredHeight = TargetPosition.y;
 
-        // Current orientation
-        Vector3 euler      = transform.rotation.eulerAngles;
-        float currentRoll  = NormalizeAngle(euler.z);
-        float currentPitch = NormalizeAngle(euler.x);
-        float currentYaw   = euler.y;
+        // Yaw target
+        Vector3 toLook = LookTargetPosition - transform.position;
+        toLook.y = 0f;
 
-        // Desired orientation
-        float desiredRoll  = Mathf.Clamp(-rightDist   * _droneMovementSystemData.RollSensitivity,
-                                         -_droneMovementSystemData.RollClamp,
-                                          _droneMovementSystemData.RollClamp);
-
-        float desiredPitch = Mathf.Clamp(forwardDist * _droneMovementSystemData.PitchSensitivity,
-                                         -_droneMovementSystemData.PitchClamp,
-                                          _droneMovementSystemData.PitchClamp);
-        Vector3 flatDirection = new Vector3(toLookTarget.x, 0f, toLookTarget.z).normalized;
-        float desiredYawl = Vector3.SignedAngle(Vector3.forward, flatDirection, Vector3.up);
-        
-        
-        // PID outputs
-        float rollValue     = _rollController.Update(deltaTime, currentRoll, desiredRoll);
-        float pitchValue    = _pitchController.Update(deltaTime, currentPitch, desiredPitch);
-        float throttle      = _throttleController.Update(deltaTime, -SignedForce(toTarget, -transform.up, 0.75f) , 0);
-        float height        = _heightController.Update(deltaTime, transform.position.y , TargetPosition.y);
-        float flHeightValue = _heightController.Update(deltaTime, _droneMotors[0].transform.position.y, TargetPosition.y);
-        float frHeightValue = _heightController.Update(deltaTime, _droneMotors[1].transform.position.y, TargetPosition.y);
-        float brHeightValue = _heightController.Update(deltaTime, _droneMotors[2].transform.position.y, TargetPosition.y);
-        float blHeightValue = _heightController.Update(deltaTime, _droneMotors[3].transform.position.y, TargetPosition.y);
-        float yawValue      = -_yawlController.UpdateAngle(deltaTime, transform.eulerAngles.y, desiredYawl, _rigidbody.angularVelocity.y);
-
-
-        // Motor forces
-        Vector3 flMotorForce = _droneMotors[0].transform.up *
-                               (- pitchValue * _droneMovementSystemData.PitchForceMultiplier
-                                - rollValue * _droneMovementSystemData.RollForceMultiplier
-                                + yawValue   * _droneMovementSystemData.YawlForceMultiplier
-                                + flHeightValue * _droneMovementSystemData.HeightForceMultiplier
-                                + throttle * _droneMovementSystemData.ThrottleForceMultiplier);
-
-        Vector3 frMotorForce = _droneMotors[1].transform.up *
-                               ( -pitchValue * _droneMovementSystemData.PitchForceMultiplier
-                                + rollValue * _droneMovementSystemData.RollForceMultiplier
-                                - yawValue   * _droneMovementSystemData.YawlForceMultiplier
-                                + frHeightValue * _droneMovementSystemData.HeightForceMultiplier
-                                + throttle * _droneMovementSystemData.ThrottleForceMultiplier);
-
-        Vector3 brMotorForce = _droneMotors[2].transform.up *
-                               (pitchValue * _droneMovementSystemData.PitchForceMultiplier
-                                + rollValue * _droneMovementSystemData.RollForceMultiplier
-                                + yawValue   * _droneMovementSystemData.YawlForceMultiplier
-                                + brHeightValue * _droneMovementSystemData.HeightForceMultiplier
-                                + throttle * _droneMovementSystemData.ThrottleForceMultiplier);
-
-        Vector3 blMotorForce = _droneMotors[3].transform.up *
-                               (pitchValue * _droneMovementSystemData.PitchForceMultiplier
-                                - rollValue * _droneMovementSystemData.RollForceMultiplier
-                                - yawValue   * _droneMovementSystemData.YawlForceMultiplier
-                                + blHeightValue * _droneMovementSystemData.HeightForceMultiplier
-                                + throttle * _droneMovementSystemData.ThrottleForceMultiplier);
-
-        /*Vector3 flMotorForce = _droneMotors[0].transform.up *
-                               (throttle * _droneMovementSystemData.ThrottleForceMultiplier *
-                                (1 + ((Average(-pitchValue, -rollValue) + 1) / 2) * (_droneMovementSystemData.RollPitchYawMaxEffect)));
-
-        Vector3 frMotorForce = _droneMotors[1].transform.up * 
-                               (throttle * _droneMovementSystemData.ThrottleForceMultiplier * 
-                                (1 + ((Average(-pitchValue, rollValue) + 1) / 2) * (_droneMovementSystemData.RollPitchYawMaxEffect)));
-        Vector3 brMotorForce = _droneMotors[2].transform.up * 
-                               (throttle * _droneMovementSystemData.ThrottleForceMultiplier * 
-                                (1 + ((Average(pitchValue, rollValue) + 1) / 2) * (_droneMovementSystemData.RollPitchYawMaxEffect)));
-        Vector3 blMotorForce = _droneMotors[3].transform.up * 
-                               (throttle * _droneMovementSystemData.ThrottleForceMultiplier * 
-                                (1 + ((Average(pitchValue, -rollValue) + 1) / 2) * _droneMovementSystemData.RollPitchYawMaxEffect));*/
-
-        // Apply forces
-        _rigidbody.AddForceAtPosition(ForceMagnitudeClamped(_flMotorLastForce,flMotorForce, _droneMovementSystemData.ForceStep),_droneMotors[0].position, ForceMode.Force);
-        _rigidbody.AddForceAtPosition(ForceMagnitudeClamped(_frMotorLastForce,frMotorForce, _droneMovementSystemData.ForceStep),_droneMotors[1].position, ForceMode.Force);
-        _rigidbody.AddForceAtPosition(ForceMagnitudeClamped(_brMotorLastForce,brMotorForce, _droneMovementSystemData.ForceStep),_droneMotors[2].position, ForceMode.Force);
-        _rigidbody.AddForceAtPosition(ForceMagnitudeClamped(_blMotorLastForce,blMotorForce, _droneMovementSystemData.ForceStep),_droneMotors[3].position, ForceMode.Force);
-        
-        //Air resistance based on the collider
-        Vector3 localVel = transform.InverseTransformDirection(_rigidbody.linearVelocity);
-        Vector3 localAngVel = transform.InverseTransformDirection(_rigidbody.angularVelocity);
-
-        Vector3 dragLocal = new Vector3(
-            localVel.x * Mathf.Abs(localVel.x) * _areaX,
-            localVel.y * Mathf.Abs(localVel.y) * _areaY,
-            localVel.z * Mathf.Abs(localVel.z) * _areaZ
-        );
-        
-        Vector3 torqueLocal = new Vector3(
-            localAngVel.x * Mathf.Abs(localAngVel.x) * _areaX,
-            localAngVel.y * Mathf.Abs(localAngVel.y) * _areaY,
-            localAngVel.z * Mathf.Abs(localAngVel.z) * _areaZ
-        );
-
-        Vector3 dampedVel = transform.TransformDirection(dragLocal);
-        Vector3 dampedAngVel = transform.TransformDirection(torqueLocal);
-
-        _rigidbody.AddForce(-dampedVel * _rigidbody.linearDamping);
-        _rigidbody.AddTorque(-dampedAngVel * _rigidbody.angularDamping);
-
-        _rigidbody.AddForce(Physics.gravity * _droneMovementSystemData.GravityScale,ForceMode.Acceleration);
-        
-        _flMotorLastForce = flMotorForce;
-        _frMotorLastForce = frMotorForce;
-        _brMotorLastForce = brMotorForce;
-        _blMotorLastForce = blMotorForce;
-
-        // Debug values
-        _forwardDistDebug = forwardDist;
-        _rightDistDebug   = rightDist;
-        _upDistDebug      = upDist;
-
-        _yawForwarDebug = yawForward;
-        _yawRightDebug = yawRight;
-        _yawUpDebug = yawUp;
-
-        _flMotorForceDebug = SignedForce(_flMotorLastForce);
-        _frMotorForceDebug = SignedForce(_frMotorLastForce);
-        _brMotorForceDebug = SignedForce(_brMotorLastForce);
-        _blMotorForceDebug = SignedForce(_blMotorLastForce);
-    }
-
-    private static float NormalizeAngle(float angle)
-    {
-        if (angle > 180f) angle -= 360f;
-        return angle;
-    }
-
-    private static float SignedForce(Vector3 force, float down = 0)
-    {
-        return force.magnitude * (Vector3.Dot(force.normalized, Vector3.down) > down ? -1 : 1);
-    }
-    private static float SignedForce(Vector3 force, Vector3 downVector, float down = 0)
-    {
-        return force.magnitude * (Vector3.Dot(force.normalized, downVector) > down ? -1 : 1);
-    }
-    
-    public static Vector3 ForceMagnitudeClamped(Vector3 current, Vector3 target, float maxStep)
-    {
-        float currentMag = current.magnitude;
-        float targetMag  = target.magnitude;
-
-        // Clamp magnitude toward target
-        float newMag = Mathf.MoveTowards(currentMag, targetMag, maxStep);
-
-        // Preserve direction of current force
-        Vector3 direction = target.normalized;
-
-        return direction * newMag;
-    }
-
-
-    public static float Average(params float[] values)
-    {
-        return values.ToList().Average();
-    }
-
-
-    private void OnDrawGizmos()
-    {
-        if(!Application.isPlaying)
+        if (toLook.sqrMagnitude < 0.01f)
+        {
+            _desiredYawRate = 0f;
             return;
-        #region PIDs
-
-        //PIDs
-        //
-        //HorizontalTilt
-        if (_debugRollPid)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(transform.position + transform.up * 1,
-                transform.position + transform.up * 1 + transform.forward * _rollController.ProportionalDebug);
-
-            Gizmos.color = Color.salmon;
-            Gizmos.DrawLine(transform.position + transform.up * 1,
-                transform.position + transform.up * 1 + transform.forward * _rollController.IntegralDebug);
-
-            Gizmos.color = Color.seaGreen;
-            Gizmos.DrawLine(transform.position + transform.up * 1,
-                transform.position + transform.up * 1 + transform.forward * _rollController.DerivativeDebug);
-
-#if UNITY_EDITOR
-            Handles.Label(
-                transform.position + transform.up * 1 +
-                transform.forward * _rollController.ProportionalDebug,
-                $"HT P: {_rollController.ProportionalDebug:F2}");
-            Handles.Label(
-                transform.position + transform.up * 1 +
-                transform.forward * _rollController.IntegralDebug,
-                $"HT I: {_rollController.IntegralDebug:F2}");
-            Handles.Label(
-                transform.position + transform.up * 1 +
-                transform.forward * _rollController.DerivativeDebug,
-                $"HT D: {_rollController.DerivativeDebug:F2}");
-#endif
         }
 
-        //VerticalTilt
-        if (_debugPitchPid)
-        {
-            Gizmos.color = Color.lightCyan;
-            Gizmos.DrawLine(transform.position + transform.up * 2,
-                transform.position + transform.up * 2 + transform.forward * _pitchController.ProportionalDebug);
+        float angle = Vector3.SignedAngle(transform.forward, toLook, Vector3.up) * toLook.sqrMagnitude;
 
-            Gizmos.color = Color.lightSalmon;
-            Gizmos.DrawLine(transform.position + transform.up * 2,
-                transform.position + transform.up * 2 + transform.forward * _pitchController.IntegralDebug);
+        // Simple proportional yaw controller
+        _desiredYawRate = Mathf.Clamp(angle * 0.05f, _desireYawRateClamp.x, _desireYawRateClamp.y);
+    }
 
-            Gizmos.color = Color.lightSeaGreen;
-            Gizmos.DrawLine(transform.position + transform.up * 2,
-                transform.position + transform.up * 2 + transform.forward * _pitchController.DerivativeDebug);
+    /// <summary>
+    /// Reset drone state and controller targets.
+    /// </summary>
+    public void Reset()
+    {
+        _rb.linearVelocity = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
 
-#if UNITY_EDITOR
-            Handles.Label(
-                transform.position + transform.up * 2 +
-                transform.forward * _pitchController.ProportionalDebug,
-                $"VT P: {_pitchController.ProportionalDebug:F2}");
-            Handles.Label(
-                transform.position + transform.up * 2 +
-                transform.forward * _pitchController.IntegralDebug,
-                $"VT I: {_pitchController.IntegralDebug:F2}");
-            Handles.Label(
-                transform.position + transform.up * 2 +
-                transform.forward * _pitchController.DerivativeDebug,
-                $"VT D: {_pitchController.DerivativeDebug:F2}");
-#endif
-        }
+        _desiredForwardVel = 0f;
+        _desiredRightVel = 0f;
+        _desiredYawRate = 0f;
+        _desiredHeight = _initialHeight;
 
-        //Throttle
-        if (_debugThrottlePid)
-        {
-            Gizmos.color = Color.darkCyan;
-            Gizmos.DrawLine(transform.position + transform.up * 3,
-                transform.position + transform.up * 2.9f + transform.forward * _throttleController.ProportionalDebug);
+        transform.position = new Vector3(transform.position.x, _initialHeight, transform.position.z);
+        transform.rotation = Quaternion.identity;
 
-            Gizmos.color = Color.darkSalmon;
-            Gizmos.DrawLine(transform.position + transform.up * 3,
-                transform.position + transform.up * 3 + transform.forward * _throttleController.IntegralDebug);
-
-            Gizmos.color = Color.darkSeaGreen;
-            Gizmos.DrawLine(transform.position + transform.up * 3,
-                transform.position + transform.up * 3.1f + transform.forward * _throttleController.DerivativeDebug);
-
-#if UNITY_EDITOR
-            Handles.Label(
-                transform.position + transform.up * 2.9f +
-                transform.forward * _throttleController.ProportionalDebug,
-                $"T P: {_throttleController.ProportionalDebug:F2}");
-            Handles.Label(
-                transform.position + transform.up * 3 +
-                transform.forward * _throttleController.IntegralDebug, $"T I: {_throttleController.IntegralDebug:F2}");
-            Handles.Label(
-                transform.position + transform.up * 3.1f +
-                transform.forward * _throttleController.DerivativeDebug,
-                $"T D: {_throttleController.DerivativeDebug:F2}");
-#endif
-        }
-
-        //Rotation
-        if (_debugRotationPid)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(transform.position + transform.up,
-                transform.position + transform.up * _yawlController.ProportionalDebug);
-
-            Gizmos.color = Color.salmon;
-            Gizmos.DrawLine(transform.position + transform.up,
-                transform.position + transform.up * _yawlController.IntegralDebug);
-
-            Gizmos.color = Color.seaGreen;
-            Gizmos.DrawLine(transform.position + transform.up,
-                transform.position + transform.up * _yawlController.DerivativeDebug);
-
-#if UNITY_EDITOR
-            Handles.Label(transform.position + transform.up + transform.up * _yawlController.ProportionalDebug,
-                $"R P: {_yawlController.ProportionalDebug:F2}");
-            Handles.Label(transform.position + transform.up + transform.up * _yawlController.IntegralDebug,
-                $"R I: {_yawlController.IntegralDebug:F2}");
-            Handles.Label(transform.position + transform.up + transform.up * _yawlController.DerivativeDebug,
-                $"R D: {_yawlController.DerivativeDebug:F2}");
-#endif
-        }
-
-        #endregion
-
-        // Forces
-        //
-        if (_debugForces)
-        {
-            // Draw base line to target
-            Gizmos.color = Color.white;
-            Gizmos.DrawLine(_droneMotors[0].transform.position,
-                _droneMotors[0].transform.position + _droneMotors[0].transform.up *  _flMotorForceDebug / 100);
-            Gizmos.DrawLine(_droneMotors[1].transform.position,
-                _droneMotors[1].transform.position + _droneMotors[1].transform.up *  _frMotorForceDebug / 100);
-            Gizmos.DrawLine(_droneMotors[2].transform.position,
-                _droneMotors[2].transform.position + _droneMotors[2].transform.up * _brMotorForceDebug / 100);
-            Gizmos.DrawLine(_droneMotors[3].transform.position,
-                _droneMotors[3].transform.position + _droneMotors[3].transform.up * _blMotorForceDebug / 100);
-
-
-            // Optional: label distances
-#if UNITY_EDITOR
-            Handles.Label(_droneMotors[0].transform.position + _droneMotors[0].transform.up * _flMotorForceDebug / 100,
-                $"Force: {_flMotorForceDebug:F2}");
-            Handles.Label(_droneMotors[1].transform.position + _droneMotors[1].transform.up * _frMotorForceDebug / 100,
-                $"Force: {_frMotorForceDebug:F2}");
-            Handles.Label(_droneMotors[2].transform.position + _droneMotors[2].transform.up * _brMotorForceDebug / 100,
-                $"Force: {_brMotorForceDebug:F2}");
-            Handles.Label(_droneMotors[3].transform.position + _droneMotors[3].transform.up * _blMotorForceDebug / 100,
-                $"Force: {_blMotorForceDebug:F2}");
-#endif
-        }
-
-        // Distances
-        //
-        if (_debugDistances)
-        {
-            // Draw base line to target
-            Gizmos.color = Color.white;
-            Gizmos.DrawLine(transform.position, TargetPosition);
-
-            // Draw axis-aligned projections
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(transform.position, transform.position + _yawForwarDebug* _forwardDistDebug);
-
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, transform.position + _yawRightDebug * _rightDistDebug);
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position, transform.position + _yawUpDebug * _upDistDebug);
-
-            // Optional: label distances
-#if UNITY_EDITOR
-            Handles.Label(transform.position + _yawForwarDebug * _forwardDistDebug,
-                $"Forward: {_forwardDistDebug:F2}");
-            Handles.Label(transform.position + _yawRightDebug * _rightDistDebug, $"Right: {_rightDistDebug:F2}");
-            Handles.Label(transform.position + _yawUpDebug * _upDistDebug, $"Up: {_upDistDebug:F2}");
-#endif
-        }
-
+        enabled = true;
     }
 }
