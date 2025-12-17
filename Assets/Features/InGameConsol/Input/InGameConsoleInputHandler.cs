@@ -6,6 +6,7 @@ public class InGameConsoleInputHandler : Singleton<InGameConsoleInputHandler>
 {
     private InGameConsoleInputActions _inputActions;
 
+    public event Action OnOpen;
     public event Action<bool> OnEnter;
     public event Action<int> OnDirectionInput;
 
@@ -18,6 +19,7 @@ public class InGameConsoleInputHandler : Singleton<InGameConsoleInputHandler>
     private void SetUpInputActions()
     {
         _inputActions.Console.Enter.started += _ => OnEnter?.Invoke(true);
+        _inputActions.Console.Open.started += _ => OnOpen?.Invoke();
         //_inputActions.Console.Enter.canceled += _ => OnEnter?.Invoke(false);
         
         _inputActions.Console.DirectionInput.performed += (context) => OnDirectionInput?.Invoke(Mathf.RoundToInt(context.ReadValue<float>()));
@@ -25,12 +27,14 @@ public class InGameConsoleInputHandler : Singleton<InGameConsoleInputHandler>
     
     private void OnEnable()
     {
+        _inputActions.Console.Open.Enable();
         _inputActions.Console.Enter.Enable();
         _inputActions.Console.DirectionInput.Enable();
     }
 
     private void OnDisable()
     {
+        _inputActions.Console.Open.Disable();
         _inputActions.Console.Enter.Disable();
         _inputActions.Console.DirectionInput.Disable();
     }

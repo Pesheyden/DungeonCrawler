@@ -109,6 +109,15 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Open"",
+                    ""type"": ""Button"",
+                    ""id"": ""04f30cee-2b1b-4d5e-8b61-b0ee65723c14"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -155,6 +164,17 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
                     ""action"": ""DirectionInput"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c8c296f2-7e8f-4055-8ada-aee835eaad62"",
+                    ""path"": ""<Keyboard>/backquote"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Open"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -165,6 +185,7 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
         m_Console = asset.FindActionMap("Console", throwIfNotFound: true);
         m_Console_Enter = m_Console.FindAction("Enter", throwIfNotFound: true);
         m_Console_DirectionInput = m_Console.FindAction("DirectionInput", throwIfNotFound: true);
+        m_Console_Open = m_Console.FindAction("Open", throwIfNotFound: true);
     }
 
     ~@InGameConsoleInputActions()
@@ -247,6 +268,7 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
     private List<IConsoleActions> m_ConsoleActionsCallbackInterfaces = new List<IConsoleActions>();
     private readonly InputAction m_Console_Enter;
     private readonly InputAction m_Console_DirectionInput;
+    private readonly InputAction m_Console_Open;
     /// <summary>
     /// Provides access to input actions defined in input action map "Console".
     /// </summary>
@@ -266,6 +288,10 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
         /// Provides access to the underlying input action "Console/DirectionInput".
         /// </summary>
         public InputAction @DirectionInput => m_Wrapper.m_Console_DirectionInput;
+        /// <summary>
+        /// Provides access to the underlying input action "Console/Open".
+        /// </summary>
+        public InputAction @Open => m_Wrapper.m_Console_Open;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -298,6 +324,9 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
             @DirectionInput.started += instance.OnDirectionInput;
             @DirectionInput.performed += instance.OnDirectionInput;
             @DirectionInput.canceled += instance.OnDirectionInput;
+            @Open.started += instance.OnOpen;
+            @Open.performed += instance.OnOpen;
+            @Open.canceled += instance.OnOpen;
         }
 
         /// <summary>
@@ -315,6 +344,9 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
             @DirectionInput.started -= instance.OnDirectionInput;
             @DirectionInput.performed -= instance.OnDirectionInput;
             @DirectionInput.canceled -= instance.OnDirectionInput;
+            @Open.started -= instance.OnOpen;
+            @Open.performed -= instance.OnOpen;
+            @Open.canceled -= instance.OnOpen;
         }
 
         /// <summary>
@@ -369,5 +401,12 @@ public partial class @InGameConsoleInputActions: IInputActionCollection2, IDispo
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnDirectionInput(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Open" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnOpen(InputAction.CallbackContext context);
     }
 }

@@ -123,16 +123,24 @@ public class BInGameConsole : Singleton<BInGameConsole>
         };
         _consoleSuggestionsListView.Rebuild();
 
+        _consoleRoot.style.visibility = Visibility.Hidden;
     }
     
     private void Start()
     {
         InGameConsoleInputHandler.Instance.OnEnter += OnEnterPressed;
         InGameConsoleInputHandler.Instance.OnDirectionInput += OnDirectionInput;
+        InGameConsoleInputHandler.Instance.OnOpen += OnOpen;
     }
 
     #region InputCallbacks
 
+    private void OnOpen()
+    {
+        _consoleRoot.style.visibility = _consoleRoot.style.visibility == Visibility.Visible
+            ? Visibility.Hidden
+            : Visibility.Visible;
+    }
     private void OnEnterPressed(bool value)
     {
         if (_selectedIndex > 0)

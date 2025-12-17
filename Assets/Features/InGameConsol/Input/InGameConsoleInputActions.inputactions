@@ -23,6 +23,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Open",
+                    "type": "Button",
+                    "id": "04f30cee-2b1b-4d5e-8b61-b0ee65723c14",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -69,6 +78,17 @@
                     "action": "DirectionInput",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "c8c296f2-7e8f-4055-8ada-aee835eaad62",
+                    "path": "<Keyboard>/backquote",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Open",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }

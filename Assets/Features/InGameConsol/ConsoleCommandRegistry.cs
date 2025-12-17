@@ -9,6 +9,7 @@ public class ConsoleCommandRegistry
     private static readonly Dictionary<string, List<MethodInfo>> commands = new();
 
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
     public static void UpdateCommands()
     {
         commands.Clear();
@@ -31,6 +32,8 @@ public class ConsoleCommandRegistry
                 }
             }
         }
+        
+        Debug.Log("Commands updated after assembly reload.");
     }
 
     public static bool TryExecute(string key, string[] args, out string executionMessage)

@@ -7,11 +7,7 @@ public class ConsoleCommandUpdater
 {
     static ConsoleCommandUpdater()
     {
-        AssemblyReloadEvents.afterAssemblyReload += () =>
-        {
-            ConsoleCommandRegistry.UpdateCommands();
-            Debug.Log("Commands updated after assembly reload.");
-        };
+        //AssemblyReloadEvents.afterAssemblyReload += ConsoleCommandRegistry.UpdateCommands;
     }
 }
 #endif
