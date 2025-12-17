@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Features/Inventory/UI/Inventory.uss?fileID=7433441132597879392&amp;guid=013f6e86262703344938912b6bc47759&amp;type=3#Inventory" />
+    <ui:VisualElement style="flex-grow: 1; position: relative; top: auto; left: auto; right: auto; bottom: auto; align-items: center; justify-content: center;">
+        <ui:VisualElement name="Main" class="background" style="flex-grow: 1; width: 920px; height: 680px; max-height: 680px; align-self: auto;">
+            <ui:Label text="Inventory" class="title" />
+            <ui:VisualElement name="SlotsRoot" style="flex-grow: 1; align-items: flex-start; flex-wrap: wrap; flex-direction: row;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

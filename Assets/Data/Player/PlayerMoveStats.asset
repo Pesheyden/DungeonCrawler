@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 313aec44a3030a54a8f7f002e01a3592, type: 3}
   m_Name: PlayerMoveStats
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMoveStats
-  MoveTargetDistanceMultiplier: 10
-  LookTargetDistanceMultiplier: 1
+  MoveTargetDistanceMultiplier: 4
+  LookTargetDistanceMultiplier: 4

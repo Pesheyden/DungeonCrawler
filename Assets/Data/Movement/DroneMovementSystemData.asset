@@ -12,11 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 497aa363efa54139a34c09dd519aaf97, type: 3}
   m_Name: DroneMovementSystemData
   m_EditorClassIdentifier: Assembly-CSharp::DroneMovementSystemData
-  RollForceMultiplier: 1
-  PitchForceMultiplier: 1
-  HeightForceMultiplier: 11
-  HeightErrorMultiplier: 2
-  YawlSpeed: 1
-  RotationLerpSpeed: 1
-  MaxRoll: 45
   MaxPitch: 45
+  MaxRoll: 45
+  MaxAngularAccel: 10
+  Gravity: 9.81
+  TcVerticalVel: 1
+  TcAcceleration: 0.5
+  TcOmegaXY: 0.1
+  TcAlphaXY: 0.05
+  TcAlphaZ: 0.05
+  PropSpeedScale: 500

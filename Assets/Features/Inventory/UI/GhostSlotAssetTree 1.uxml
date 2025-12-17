@@ -1,0 +1,7 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Features/Inventory/UI/Inventory.uss?fileID=7433441132597879392&amp;guid=013f6e86262703344938912b6bc47759&amp;type=3#Inventory" />
+    <Feature.Inventory.Slot class="background" style="width: 100%; height: 100px; flex-shrink: 0; min-width: 100px; max-width: 100px; min-height: 100px; background-color: rgb(181, 0, 5); align-self: auto; align-content: flex-start; flex-wrap: nowrap; position: absolute;">
+        <ui:VisualElement name="Icon" style="flex-grow: 1;" />
+        <ui:Label text="1" name="Stack_Label" class="text" style="position: absolute; bottom: 0%;" />
+    </Feature.Inventory.Slot>
+</ui:UXML>
