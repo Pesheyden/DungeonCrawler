@@ -17,4 +17,9 @@ public class Inventory : MonoBehaviour
             .WithCapacity(_capacity)
             .Build();
     }
+
+    public void OpenClose()
+    {
+        _inventoryViewer.ChangeViewVisibility();
+    }
 }

@@ -63,7 +63,7 @@ public class PlayerInventoryViewer : InventoryViewer
         } 
         else 
         {
-            _originalSlot.Icon.style.backgroundImage = _originalSlot.BaseSprite.texture; 
+            Controller.HandleMove(_originalSlot, _originalSlot);
         }
         _originalSlot.StackLabel.visible = true;
 

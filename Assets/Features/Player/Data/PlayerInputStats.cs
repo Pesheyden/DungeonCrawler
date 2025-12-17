@@ -8,4 +8,5 @@ public class PlayerInputStats : ScriptableObject
     [SubAsset] public FloatVariable BF_RollInput;
     [SubAsset] public FloatVariable BF_HeightInput;
     [SubAsset] public FloatVariable BF_YawlInput;
+    [SubAsset] public EventSo B_OnInventoryOpenInput;
 }

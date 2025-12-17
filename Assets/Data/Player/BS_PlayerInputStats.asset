@@ -15,6 +15,18 @@ MonoBehaviour:
   _value: 0
   DebugMode: 0
   _reset: 0
+--- !u!114 &-7556975533680119955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb4b4b69c791b2d419b728de196f04dd, type: 3}
+  m_Name: B_OnInventoryOpenInput
+  m_EditorClassIdentifier: Assembly-CSharp::EventSo
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35,6 +47,7 @@ MonoBehaviour:
     VariableSo: {fileID: 7346867936788556185}
   BF_YawlInput:
     VariableSo: {fileID: 634222811274338776}
+  B_OnInventoryOpenInput: {fileID: -7556975533680119955}
 --- !u!114 &634222811274338776
 MonoBehaviour:
   m_ObjectHideFlags: 0

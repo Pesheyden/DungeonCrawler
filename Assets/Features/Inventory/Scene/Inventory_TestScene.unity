@@ -177,6 +177,7 @@ GameObject:
   - component: {fileID: 1343556731}
   - component: {fileID: 1343556729}
   - component: {fileID: 1343556733}
+  - component: {fileID: 1343556734}
   m_Layer: 0
   m_Name: PlayerInventory
   m_TagString: Untagged
@@ -256,6 +257,34 @@ MonoBehaviour:
   BaseAsset: {fileID: 9197481963319205126, guid: b9be92aa3041c3045bbb8b8cdc5aed7c, type: 3}
   SlotAsset: {fileID: 9197481963319205126, guid: f98811190ed109d41904de2d541e146e, type: 3}
   _ghostSlotAsset: {fileID: 9197481963319205126, guid: 659d3d91bd4398e48b4f875af18c8453, type: 3}
+--- !u!114 &1343556734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343556728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ee1d77fc7a0024da7f80af2c09ecc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EventListener
+  _event: {fileID: -7556975533680119955, guid: 991bc3a371d955f49814afcf4bb0be81, type: 2}
+  Response:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1343556731}
+        m_TargetAssemblyTypeName: Inventory, Assembly-CSharp
+        m_MethodName: OpenClose
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1831354351
 GameObject:
   m_ObjectHideFlags: 0

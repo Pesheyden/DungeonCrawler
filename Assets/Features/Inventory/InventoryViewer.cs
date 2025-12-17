@@ -49,4 +49,11 @@ public class InventoryViewer : MonoBehaviour
             Slots.Add(slot);
         }
     }
+
+    public void ChangeViewVisibility()
+    {
+        Root.style.visibility = Root.style.visibility == Visibility.Visible
+            ? Visibility.Hidden
+            : Visibility.Visible;
+    }
 }
